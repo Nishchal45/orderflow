@@ -1,0 +1,51 @@
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+vendor/
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Node / Dashboard
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sql.bak
+
+# Protobuf generated
+gen/
+
+# Temporary
+tmp/
+.tmp/
