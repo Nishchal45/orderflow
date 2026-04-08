@@ -55,3 +55,6 @@ gen/
 # Temporary
 tmp/
 .tmp/
+
+# Personal learning notes (keep local only)
+docs/learning/
