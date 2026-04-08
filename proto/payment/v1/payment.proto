@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package payment.v1;
+
+option go_package = "github.com/Nishchal45/orderflow/gen/payment/v1;paymentv1";
+
+import "google/protobuf/timestamp.proto";
+
+service PaymentService {
+  rpc ProcessPayment(ProcessPaymentRequest) returns (PaymentResponse);
+  rpc RefundPayment(RefundPaymentRequest) returns (PaymentResponse);
+  rpc GetPayment(GetPaymentRequest) returns (Payment);
+}
+
+// Enums
+
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_STATUS_PENDING = 1;
+  PAYMENT_STATUS_COMPLETED = 2;
+  PAYMENT_STATUS_FAILED = 3;
+  PAYMENT_STATUS_REFUNDED = 4;
+}
+
+// Messages
+
+message Payment {
+  string id = 1;
+  string order_id = 2;
+  double amount = 3;
+  string currency = 4;
+  PaymentStatus status = 5;
+  string failure_reason = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Request/Response
+
+message ProcessPaymentRequest {
+  string order_id = 1;
+  double amount = 2;
+  string currency = 3;
+  bool simulate_failure = 4;
+}
+
+message PaymentResponse {
+  Payment payment = 1;
+}
+
+message RefundPaymentRequest {
+  string payment_id = 1;
+  string order_id = 2;
+}
+
+message GetPaymentRequest {
+  string id = 1;
+}

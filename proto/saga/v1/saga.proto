@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package saga.v1;
+
+option go_package = "github.com/Nishchal45/orderflow/gen/saga/v1;sagav1";
+
+import "google/protobuf/timestamp.proto";
+
+// Enums
+
+enum SagaStatus {
+  SAGA_STATUS_UNSPECIFIED = 0;
+  SAGA_STATUS_STARTED = 1;
+  SAGA_STATUS_COMPLETED = 2;
+  SAGA_STATUS_FAILED = 3;
+  SAGA_STATUS_COMPENSATING = 4;
+  SAGA_STATUS_COMPENSATED = 5;
+}
+
+enum StepStatus {
+  STEP_STATUS_UNSPECIFIED = 0;
+  STEP_STATUS_PENDING = 1;
+  STEP_STATUS_EXECUTING = 2;
+  STEP_STATUS_COMPLETED = 3;
+  STEP_STATUS_FAILED = 4;
+  STEP_STATUS_COMPENSATING = 5;
+  STEP_STATUS_COMPENSATED = 6;
+}
+
+// Messages
+
+message Saga {
+  string id = 1;
+  string order_id = 2;
+  SagaStatus status = 3;
+  string current_step = 4;
+  repeated SagaStep steps = 5;
+  string failure_reason = 6;
+  google.protobuf.Timestamp started_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
+}
+
+message SagaStep {
+  string id = 1;
+  string saga_id = 2;
+  string step_name = 3;
+  StepStatus status = 4;
+  string error = 5;
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp completed_at = 7;
+}
+
+// Event envelope used across all Kafka messages
+
+message Event {
+  string event_id = 1;
+  string event_type = 2;
+  string aggregate_id = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  int32 version = 5;
+  bytes payload = 6;
+  EventMetadata metadata = 7;
+}
+
+message EventMetadata {
+  string trace_id = 1;
+  string source = 2;
+  string correlation_id = 3;
+}
