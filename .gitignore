@@ -4,6 +4,12 @@ bin/
 *.dll
 *.so
 *.dylib
+api-gateway
+order-service
+payment-service
+inventory-service
+saga-orchestrator
+notification-service
 
 # Go
 vendor/
