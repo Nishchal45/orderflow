@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: orderflow
       POSTGRES_DB: orderflow
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql
