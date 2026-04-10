@@ -62,9 +62,9 @@ type CreateOrderItem struct {
 
 // ValidTransitions defines which status transitions are allowed.
 var ValidTransitions = map[OrderStatus][]OrderStatus{
-	StatusCreated:            {StatusInventoryReserving},
+	StatusCreated:            {StatusInventoryReserving, StatusPaymentPending, StatusRejected},
 	StatusInventoryReserving: {StatusPaymentPending, StatusRejected},
-	StatusPaymentPending:     {StatusConfirmed, StatusRollingBack},
+	StatusPaymentPending:     {StatusConfirmed, StatusRollingBack, StatusCancelled},
 	StatusRollingBack:        {StatusCancelled},
 	StatusConfirmed:          {StatusShipped},
 }
