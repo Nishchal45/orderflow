@@ -7,9 +7,9 @@ option go_package = "github.com/Nishchal45/orderflow/gen/payment/v1;paymentv1";
 import "google/protobuf/timestamp.proto";
 
 service PaymentService {
-  rpc ProcessPayment(ProcessPaymentRequest) returns (PaymentResponse);
-  rpc RefundPayment(RefundPaymentRequest) returns (PaymentResponse);
-  rpc GetPayment(GetPaymentRequest) returns (Payment);
+  rpc ProcessPayment(ProcessPaymentRequest) returns (ProcessPaymentResponse);
+  rpc RefundPayment(RefundPaymentRequest) returns (RefundPaymentResponse);
+  rpc GetPayment(GetPaymentRequest) returns (GetPaymentResponse);
 }
 
 // Enums
@@ -44,7 +44,7 @@ message ProcessPaymentRequest {
   bool simulate_failure = 4;
 }
 
-message PaymentResponse {
+message ProcessPaymentResponse {
   Payment payment = 1;
 }
 
@@ -53,6 +53,14 @@ message RefundPaymentRequest {
   string order_id = 2;
 }
 
+message RefundPaymentResponse {
+  Payment payment = 1;
+}
+
 message GetPaymentRequest {
   string id = 1;
+}
+
+message GetPaymentResponse {
+  Payment payment = 1;
 }
