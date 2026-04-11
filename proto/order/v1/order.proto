@@ -8,9 +8,9 @@ import "google/protobuf/timestamp.proto";
 
 service OrderService {
   rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
-  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
   rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
-  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (Order);
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
 }
 
 // Enums
@@ -88,4 +88,12 @@ message ListOrdersResponse {
 message UpdateOrderStatusRequest {
   string id = 1;
   OrderStatus status = 2;
+}
+
+message GetOrderResponse {
+  Order order = 1;
+}
+
+message UpdateOrderStatusResponse {
+  Order order = 1;
 }

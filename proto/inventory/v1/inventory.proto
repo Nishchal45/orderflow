@@ -7,9 +7,9 @@ option go_package = "github.com/Nishchal45/orderflow/gen/inventory/v1;inventoryv
 import "google/protobuf/timestamp.proto";
 
 service InventoryService {
-  rpc ReserveInventory(ReserveInventoryRequest) returns (InventoryResponse);
-  rpc ReleaseInventory(ReleaseInventoryRequest) returns (InventoryResponse);
-  rpc GetStock(GetStockRequest) returns (StockResponse);
+  rpc ReserveInventory(ReserveInventoryRequest) returns (ReserveInventoryResponse);
+  rpc ReleaseInventory(ReleaseInventoryRequest) returns (ReleaseInventoryResponse);
+  rpc GetStock(GetStockRequest) returns (GetStockResponse);
 }
 
 // Enums
@@ -54,7 +54,7 @@ message ReserveItem {
   int32 quantity = 2;
 }
 
-message InventoryResponse {
+message ReserveInventoryResponse {
   bool success = 1;
   string message = 2;
   repeated Reservation reservations = 3;
@@ -64,10 +64,15 @@ message ReleaseInventoryRequest {
   string order_id = 1;
 }
 
+message ReleaseInventoryResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 message GetStockRequest {
   string product_id = 1;
 }
 
-message StockResponse {
+message GetStockResponse {
   Product product = 1;
 }
