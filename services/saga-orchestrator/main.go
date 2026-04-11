@@ -14,6 +14,7 @@ import (
 	"github.com/Nishchal45/orderflow/pkg/kafka"
 	"github.com/Nishchal45/orderflow/pkg/logger"
 	"github.com/Nishchal45/orderflow/services/saga-orchestrator/internal/engine"
+	"github.com/Nishchal45/orderflow/services/saga-orchestrator/internal/handler"
 	"github.com/Nishchal45/orderflow/services/saga-orchestrator/internal/model"
 	"github.com/Nishchal45/orderflow/services/saga-orchestrator/internal/repository"
 	kafkago "github.com/segmentio/kafka-go"
@@ -47,6 +48,7 @@ func main() {
 	// Create saga engine
 	repo := repository.NewSagaRepository(db)
 	sagaEngine := engine.NewSagaEngine(repo, producer, log, orderURL, inventoryURL, paymentURL)
+	sagaHandler := handler.NewSagaHandler(repo, log)
 
 	// Create Kafka consumer for ORDER_CREATED events
 	consumer := kafka.NewConsumer(kafkaCfg.Brokers, events.TopicOrderCreated, "saga-orchestrator")
@@ -59,6 +61,7 @@ func main() {
 	// Health check endpoint
 	go func() {
 		mux := http.NewServeMux()
+		mux.HandleFunc("GET /api/v1/saga/{order_id}", sagaHandler.GetSagaByOrderID)
 		mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprintf(w, `{"status":"ok","service":"saga-orchestrator"}`)
