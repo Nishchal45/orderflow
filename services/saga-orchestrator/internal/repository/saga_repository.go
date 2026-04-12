@@ -126,7 +126,7 @@ func (r *SagaRepository) GetByOrderID(ctx context.Context, orderID string) (*mod
 	// Get steps
 	rows, err := r.db.QueryContext(ctx,
 		`SELECT id, saga_id, step_name, status, COALESCE(error, ''), started_at, completed_at
-		 FROM saga_steps WHERE saga_id = $1 ORDER BY created_at`, saga.ID)
+		 FROM saga_steps WHERE saga_id = $1 ORDER BY started_at NULLS LAST`, saga.ID)
 	if err != nil {
 		return nil, fmt.Errorf("query steps: %w", err)
 	}

@@ -57,14 +57,14 @@ export default function OrderDetail() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const orderRes = await fetch(`http://localhost:8081/api/v1/orders/${id}`);
+        const orderRes = await fetch(`http://localhost:8080/api/v1/orders/${id}`);
         setOrder(await orderRes.json());
       } catch (err) {
         console.error('Failed to fetch order:', err);
       }
 
       try {
-        const sagaRes = await fetch(`http://localhost:8084/api/v1/saga/${id}`);
+        const sagaRes = await fetch(`http://localhost:8080/api/v1/saga/${id}`);
         if (sagaRes.ok) setSaga(await sagaRes.json());
       } catch {}
     };
