@@ -19,9 +19,16 @@ func NewPaymentRepository(db *sql.DB) *PaymentRepository {
 }
 
 func (r *PaymentRepository) ProcessPayment(ctx context.Context, req model.ProcessPaymentRequest) (*model.Payment, error) {
-	// Simulate processing delay (100-500ms)
+	// Simulate processing delay (100-500ms).
+	// Use select with ctx.Done() so we stop waiting if the request is cancelled.
+	// A raw time.Sleep ignores context cancellation — bad in production.
 	delay := time.Duration(100+rand.Intn(400)) * time.Millisecond
-	time.Sleep(delay)
+	select {
+	case <-time.After(delay):
+		// Normal delay completed
+	case <-ctx.Done():
+		return nil, fmt.Errorf("payment cancelled: %w", ctx.Err())
+	}
 
 	currency := req.Currency
 	if currency == "" {

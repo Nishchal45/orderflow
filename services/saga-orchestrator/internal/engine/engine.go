@@ -53,6 +53,18 @@ func NewSagaEngine(
 func (e *SagaEngine) ExecuteSaga(ctx context.Context, orderData model.OrderData) error {
 	e.logger.Info().Str("order_id", orderData.ID).Msg("starting saga")
 
+	// IDEMPOTENCY CHECK: If Kafka delivers the same ORDER_CREATED event twice,
+	// we must not create a second saga. Check if one already exists.
+	existing, _ := e.repo.GetByOrderID(ctx, orderData.ID)
+	if existing != nil {
+		e.logger.Warn().
+			Str("order_id", orderData.ID).
+			Str("existing_saga_id", existing.ID).
+			Str("status", string(existing.Status)).
+			Msg("saga already exists for this order — skipping duplicate event")
+		return nil
+	}
+
 	// Create saga record in database
 	saga, err := e.repo.CreateSaga(ctx, orderData.ID)
 	if err != nil {
@@ -62,8 +74,12 @@ func (e *SagaEngine) ExecuteSaga(ctx context.Context, orderData model.OrderData)
 	e.logger.Info().Str("saga_id", saga.ID).Str("order_id", orderData.ID).Msg("saga created")
 
 	// ===== STEP 1: Reserve Inventory =====
-	e.repo.UpdateStepStatus(ctx, saga.ID, model.StepReserveInventory, model.StepExecuting, "")
-	e.repo.UpdateSagaStatus(ctx, saga.ID, model.SagaStarted, model.StepReserveInventory, "")
+	if err := e.repo.UpdateStepStatus(ctx, saga.ID, model.StepReserveInventory, model.StepExecuting, ""); err != nil {
+		e.logger.Error().Err(err).Msg("failed to update step status")
+	}
+	if err := e.repo.UpdateSagaStatus(ctx, saga.ID, model.SagaStarted, model.StepReserveInventory, ""); err != nil {
+		e.logger.Error().Err(err).Msg("failed to update saga status")
+	}
 
 	err = e.reserveInventory(ctx, orderData)
 	if err != nil {
@@ -83,8 +99,12 @@ func (e *SagaEngine) ExecuteSaga(ctx context.Context, orderData model.OrderData)
 	e.updateOrderStatus(ctx, orderData.ID, "PAYMENT_PENDING")
 
 	// ===== STEP 2: Process Payment =====
-	e.repo.UpdateStepStatus(ctx, saga.ID, model.StepProcessPayment, model.StepExecuting, "")
-	e.repo.UpdateSagaStatus(ctx, saga.ID, model.SagaStarted, model.StepProcessPayment, "")
+	if err := e.repo.UpdateStepStatus(ctx, saga.ID, model.StepProcessPayment, model.StepExecuting, ""); err != nil {
+		e.logger.Error().Err(err).Msg("failed to update step status")
+	}
+	if err := e.repo.UpdateSagaStatus(ctx, saga.ID, model.SagaStarted, model.StepProcessPayment, ""); err != nil {
+		e.logger.Error().Err(err).Msg("failed to update saga status")
+	}
 
 	err = e.processPayment(ctx, orderData)
 	if err != nil {
