@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package order.v1;
+
+option go_package = "github.com/Nishchal45/orderflow/gen/order/v1;orderv1";
+
+import "google/protobuf/timestamp.proto";
+
+service OrderService {
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+  rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
+}
+
+// Enums
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_CREATED = 1;
+  ORDER_STATUS_INVENTORY_RESERVING = 2;
+  ORDER_STATUS_PAYMENT_PENDING = 3;
+  ORDER_STATUS_CONFIRMED = 4;
+  ORDER_STATUS_SHIPPED = 5;
+  ORDER_STATUS_ROLLING_BACK = 6;
+  ORDER_STATUS_CANCELLED = 7;
+  ORDER_STATUS_REJECTED = 8;
+}
+
+// Messages
+
+message OrderItem {
+  string id = 1;
+  string order_id = 2;
+  string product_id = 3;
+  int32 quantity = 4;
+  double unit_price = 5;
+}
+
+message Order {
+  string id = 1;
+  string customer_id = 2;
+  OrderStatus status = 3;
+  double total_amount = 4;
+  string currency = 5;
+  repeated OrderItem items = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Request/Response
+
+message CreateOrderRequest {
+  string customer_id = 1;
+  repeated CreateOrderItem items = 2;
+  bool simulate_payment_failure = 3;
+  bool simulate_inventory_failure = 4;
+}
+
+message CreateOrderItem {
+  string product_id = 1;
+  int32 quantity = 2;
+  double unit_price = 3;
+}
+
+message CreateOrderResponse {
+  Order order = 1;
+}
+
+message GetOrderRequest {
+  string id = 1;
+}
+
+message ListOrdersRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string customer_id = 3;
+  OrderStatus status = 4;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message UpdateOrderStatusRequest {
+  string id = 1;
+  OrderStatus status = 2;
+}
+
+message GetOrderResponse {
+  Order order = 1;
+}
+
+message UpdateOrderStatusResponse {
+  Order order = 1;
+}

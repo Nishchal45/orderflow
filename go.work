@@ -1,0 +1,11 @@
+go 1.26.2
+
+use (
+	./pkg
+	./services/api-gateway
+	./services/inventory-service
+	./services/notification-service
+	./services/order-service
+	./services/payment-service
+	./services/saga-orchestrator
+)
