@@ -79,32 +79,40 @@ func (r *InventoryRepository) Release(ctx context.Context, orderID string) error
 	}
 	defer tx.Rollback()
 
-	// Get all reservations for this order
+	// Step 1: Read all reservations into memory first
 	rows, err := tx.QueryContext(ctx,
 		`SELECT product_id, quantity FROM reservations WHERE order_id = $1 AND status = 'RESERVED'`, orderID)
 	if err != nil {
 		return fmt.Errorf("query reservations: %w", err)
 	}
-	defer rows.Close()
 
+	type item struct {
+		productID string
+		quantity  int
+	}
+	var items []item
 	for rows.Next() {
-		var productID string
-		var quantity int
-		if err := rows.Scan(&productID, &quantity); err != nil {
+		var i item
+		if err := rows.Scan(&i.productID, &i.quantity); err != nil {
+			rows.Close()
 			return fmt.Errorf("scan reservation: %w", err)
 		}
+		items = append(items, i)
+	}
+	rows.Close() // Close rows BEFORE executing updates
 
-		// Decrease reserved count
+	// Step 2: Now update each product's reserved count
+	for _, i := range items {
 		_, err = tx.ExecContext(ctx,
-			`UPDATE products SET reserved = reserved - $1, updated_at = NOW() WHERE id = $2`,
-			quantity, productID,
+			`UPDATE products SET reserved = GREATEST(reserved - $1, 0), updated_at = NOW() WHERE id = $2`,
+			i.quantity, i.productID,
 		)
 		if err != nil {
-			return fmt.Errorf("update reserved: %w", err)
+			return fmt.Errorf("update reserved for %s: %w", i.productID, err)
 		}
 	}
 
-	// Mark reservations as released
+	// Step 3: Mark reservations as released
 	_, err = tx.ExecContext(ctx,
 		`UPDATE reservations SET status = 'RELEASED' WHERE order_id = $1 AND status = 'RESERVED'`, orderID)
 	if err != nil {
