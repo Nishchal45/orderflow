@@ -18,6 +18,9 @@ func main() {
 
 	// Backend service URLs (configurable via env vars)
 	orderServiceURL := getEnv("ORDER_SERVICE_URL", "http://localhost:8081")
+	inventoryServiceURL := getEnv("INVENTORY_SERVICE_URL", "http://localhost:8082")
+	paymentServiceURL := getEnv("PAYMENT_SERVICE_URL", "http://localhost:8083")
+	sagaServiceURL := getEnv("SAGA_SERVICE_URL", "http://localhost:8084")
 
 	// Create reverse proxies to backend services
 	orderProxy, err := proxy.NewServiceProxy(orderServiceURL, log)
@@ -26,12 +29,36 @@ func main() {
 	}
 	log.Info().Str("url", orderServiceURL).Msg("order service proxy ready")
 
+	inventoryProxy, err := proxy.NewServiceProxy(inventoryServiceURL, log)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create inventory service proxy")
+	}
+
+	paymentProxy, err := proxy.NewServiceProxy(paymentServiceURL, log)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create payment service proxy")
+	}
+
+	sagaProxy, err := proxy.NewServiceProxy(sagaServiceURL, log)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create saga service proxy")
+	}
+
 	// Set up routes
 	mux := http.NewServeMux()
 
 	// Order routes → forward to Order Service
 	mux.Handle("/api/v1/orders", orderProxy)
 	mux.Handle("/api/v1/orders/", orderProxy)
+
+	// Inventory routes → forward to Inventory Service
+	mux.Handle("/api/v1/inventory/", inventoryProxy)
+
+	// Payment routes → forward to Payment Service
+	mux.Handle("/api/v1/payments/", paymentProxy)
+
+	// Saga routes → forward to Saga Orchestrator
+	mux.Handle("/api/v1/saga/", sagaProxy)
 
 	// Health check (gateway's own)
 	mux.HandleFunc("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {

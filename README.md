@@ -56,6 +56,12 @@ OrderFlow implements the **Saga Orchestration Pattern** to manage distributed tr
           └──────────────────┘
 ```
 
+## Screenshots
+
+| Order List | Create Order | Order Detail |
+|:---:|:---:|:---:|
+| ![Order List](docs/screenshots/order-list.png) | ![Create Order](docs/screenshots/create-order.png) | ![Order Detail](docs/screenshots/saga-timeline.png) |
+
 ## Key Features
 
 - **Saga Orchestration** — Automatic distributed transaction coordination with compensation (rollback)
