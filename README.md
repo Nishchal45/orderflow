@@ -185,8 +185,8 @@ curl -X POST http://localhost:8080/api/v1/orders \
 
 ```
 orderflow/
-├── proto/                    # Protobuf service contracts
-│   ├── order/v1/
+├── proto/                    # Protobuf service contracts (API-first design)
+│   ├── order/v1/             # gRPC migration planned — currently REST
 │   ├── payment/v1/
 │   ├── inventory/v1/
 │   └── saga/v1/
@@ -234,6 +234,14 @@ make docker-down   # Stop infrastructure
 make proto         # Generate protobuf code
 make clean         # Remove build artifacts
 ```
+
+## Future Improvements
+
+- [ ] **gRPC for internal communication** — Proto contracts are defined, migrate services from REST to gRPC for type-safe, faster inter-service calls
+- [ ] **OpenTelemetry + Jaeger tracing** — Tracing package exists in `pkg/tracing`, wire into all services for end-to-end request tracing
+- [ ] **Integration tests** — Docker-based tests that spin up full infrastructure and run saga flows
+- [ ] **Circuit breaker** — Stop calling failing services, fail fast and recover
+- [ ] **Kubernetes deployment** — Helm charts for production deployment
 
 ## Documentation
 
