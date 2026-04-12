@@ -146,19 +146,38 @@ func (r *OrderRepository) List(ctx context.Context, page, limit int) ([]model.Or
 }
 
 func (r *OrderRepository) UpdateStatus(ctx context.Context, id string, newStatus model.OrderStatus) (*model.Order, error) {
-	// Get current order to validate transition
-	order, err := r.GetByID(ctx, id)
+	// Use a transaction with row-level lock to prevent race conditions.
+	// Without this, two concurrent requests could both read the same status,
+	// both pass validation, and both write — causing invalid state transitions.
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	// SELECT ... FOR UPDATE locks this row until the transaction commits.
+	// Any other request trying to update the same order will WAIT here.
+	var order model.Order
+	err = tx.QueryRowContext(ctx,
+		`SELECT id, customer_id, status, total_amount, currency, simulate_payment_failure, simulate_inventory_failure, created_at, updated_at
+		 FROM orders WHERE id = $1 FOR UPDATE`,
+		id,
+	).Scan(&order.ID, &order.CustomerID, &order.Status, &order.TotalAmount, &order.Currency,
+		&order.SimulatePaymentFailure, &order.SimulateInventoryFailure, &order.CreatedAt, &order.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("order not found: %s", id)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query order for update: %w", err)
 	}
 
-	// Validate state machine transition
+	// Validate state machine transition (now safe — row is locked)
 	if !order.Status.CanTransitionTo(newStatus) {
 		return nil, fmt.Errorf("invalid transition: %s → %s", order.Status, newStatus)
 	}
 
 	// Update status
-	_, err = r.db.ExecContext(ctx,
+	_, err = tx.ExecContext(ctx,
 		`UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2`,
 		newStatus, id,
 	)
@@ -167,7 +186,7 @@ func (r *OrderRepository) UpdateStatus(ctx context.Context, id string, newStatus
 	}
 
 	// Log the event
-	_, err = r.db.ExecContext(ctx,
+	_, err = tx.ExecContext(ctx,
 		`INSERT INTO order_events (order_id, event_type, payload) VALUES ($1, $2, $3)`,
 		id, fmt.Sprintf("STATUS_CHANGED_TO_%s", newStatus), fmt.Sprintf(`{"from":"%s","to":"%s"}`, order.Status, newStatus),
 	)
@@ -175,6 +194,10 @@ func (r *OrderRepository) UpdateStatus(ctx context.Context, id string, newStatus
 		return nil, fmt.Errorf("insert event: %w", err)
 	}
 
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+
 	order.Status = newStatus
-	return order, nil
+	return &order, nil
 }
